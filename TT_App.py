@@ -92,10 +92,10 @@ page = st.sidebar.radio(
     "Navigation",
     [
         "📋 Overview",
-        "🚀 Demo Product: GMV Max",
+        "🚀 Demo: GMV Max",
         "🔍 Competitor Analysis",
         "📊 GMP Metric System",
-        "💼 Candidate Work Demo"
+        "💼 Candidate Works"
     ],
     index=0
 )
@@ -887,15 +887,33 @@ elif page == "💼 Candidate Work Demo":
             st.markdown("---")
             st.markdown(f"**Project Documentation:** {project['pdf_filename']}")
             
-            # Simple and reliable PDF loading
+            # PDF Display - Compatible with Streamlit Cloud
             pdf_filename = project['pdf_filename']
             pdf_path = os.path.join(script_dir, pdf_filename)
             
             # Check if file exists
+            pdf_found = False
+            actual_path = None
+            
             if os.path.exists(pdf_path) and os.path.isfile(pdf_path):
+                actual_path = pdf_path
+                pdf_found = True
+            else:
+                # Try to find it by scanning directory
                 try:
-                    # Read PDF
-                    with open(pdf_path, "rb") as f:
+                    all_pdfs = glob.glob(os.path.join(script_dir, "*.pdf"))
+                    for pdf_file in all_pdfs:
+                        if os.path.basename(pdf_file) == pdf_filename:
+                            actual_path = pdf_file
+                            pdf_found = True
+                            break
+                except:
+                    pass
+            
+            if pdf_found and actual_path:
+                try:
+                    # Read PDF for download button
+                    with open(actual_path, "rb") as f:
                         pdf_bytes = f.read()
                     
                     if len(pdf_bytes) == 0:
@@ -903,67 +921,69 @@ elif page == "💼 Candidate Work Demo":
                     else:
                         file_size_mb = len(pdf_bytes) / (1024 * 1024)
                         
-                        if file_size_mb > 50:
-                            st.warning(f"PDF is too large ({file_size_mb:.1f}MB). Please download to view.")
-                        else:
-                            # Encode and embed
-                            base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-                            safe_filename = pdf_filename.replace('"', '&quot;')
+                        # Provide download button (always works)
+                        col1, col2 = st.columns([1, 3])
+                        with col1:
+                            st.download_button(
+                                label=f"📥 Download PDF ({file_size_mb:.1f}MB)",
+                                data=pdf_bytes,
+                                file_name=pdf_filename,
+                                mime="application/pdf",
+                                key=f"download_{i}_{hash(pdf_filename)}"
+                            )
+                        
+                        # Try to display PDF using multiple methods
+                        st.markdown("---")
+                        st.markdown("### 📄 PDF Preview")
+                        
+                        # Method 1: Try using Streamlit's static file serving (for Streamlit Cloud)
+                        # PDF files should be in the root directory of the project
+                        try:
+                            # For Streamlit Cloud, files in root are accessible via relative path
+                            pdf_url = pdf_filename
                             
-                            pdf_html = f"""
-                            <iframe src="data:application/pdf;base64,{base64_pdf}#toolbar=1&navpanes=1&scrollbar=1" 
-                                    width="100%" height="800px" 
-                                    style="border: 1px solid #ddd; border-radius: 8px;">
-                            </iframe>
+                            # Use iframe with direct file path (works if file is accessible)
+                            pdf_viewer_html = f"""
+                            <div style="margin-top: 10px; margin-bottom: 10px;">
+                                <iframe 
+                                    src="{pdf_url}" 
+                                    width="100%" 
+                                    height="800px" 
+                                    style="border: 1px solid #ddd; border-radius: 8px;"
+                                    type="application/pdf"
+                                    loading="lazy">
+                                    <p style="padding: 20px; text-align: center; color: #666;">
+                                        Your browser blocked the PDF preview for security reasons.<br>
+                                        Please use the download button above to view the PDF.
+                                    </p>
+                                </iframe>
+                            </div>
                             """
-                            st.markdown(pdf_html, unsafe_allow_html=True)
+                            st.markdown(pdf_viewer_html, unsafe_allow_html=True)
+                            
+                            # Show fallback message
+                            st.info("""
+                            💡 **Note**: If the PDF preview is blocked by your browser, please:
+                            1. Click the download button above to download and view the PDF
+                            2. Or check your browser's security settings to allow PDF previews
+                            """)
+                            
+                        except Exception as display_error:
+                            # Fallback: Show download option only
+                            st.warning("PDF preview is not available. Please download the file to view.")
+                            
                 except Exception as e:
                     st.error(f"Error loading PDF: {str(e)}")
             else:
-                # File not found - try to find it by scanning directory
-                try:
-                    all_pdfs = glob.glob(os.path.join(script_dir, "*.pdf"))
-                    found_file = None
-                    
-                    for pdf_file in all_pdfs:
-                        if os.path.basename(pdf_file) == pdf_filename:
-                            found_file = pdf_file
-                            break
-                    
-                    if found_file:
-                        # Found it! Load and display
-                        with open(found_file, "rb") as f:
-                            pdf_bytes = f.read()
-                        
-                        if len(pdf_bytes) > 0:
-                            file_size_mb = len(pdf_bytes) / (1024 * 1024)
-                            if file_size_mb <= 50:
-                                base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-                                safe_filename = pdf_filename.replace('"', '&quot;')
-                                
-                                pdf_html = f"""
-                                <iframe src="data:application/pdf;base64,{base64_pdf}#toolbar=1&navpanes=1&scrollbar=1" 
-                                        width="100%" height="800px" 
-                                        style="border: 1px solid #ddd; border-radius: 8px;">
-                                </iframe>
-                                """
-                                st.markdown(pdf_html, unsafe_allow_html=True)
-                            else:
-                                st.warning(f"PDF is too large ({file_size_mb:.1f}MB). Please download to view.")
-                        else:
-                            st.warning("PDF file is empty")
-                    else:
-                        # Show placeholder
-                        st.markdown(f"""
-                        <div style="background-color: #f5f5f5; padding: 40px; border-radius: 8px; text-align: center; border: 2px dashed #ddd; margin: 20px 0;">
-                            <p style="color: #666; margin: 0; font-size: 16px;">📄 <strong>{pdf_filename}</strong></p>
-                            <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">
-                                PDF file not found in directory
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                except Exception as e:
-                    st.error(f"Error searching for PDF: {str(e)}")
+                # File not found
+                st.markdown(f"""
+                <div style="background-color: #f5f5f5; padding: 40px; border-radius: 8px; text-align: center; border: 2px dashed #ddd; margin: 20px 0;">
+                    <p style="color: #666; margin: 0; font-size: 16px;">📄 <strong>{pdf_filename}</strong></p>
+                    <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">
+                        PDF file not found. Please ensure the file is in the project directory.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
     
     # Skills Summary
     st.markdown("---")
