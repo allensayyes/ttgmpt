@@ -121,10 +121,10 @@ if page == "📋 Overview":
     
     demo_structure = pd.DataFrame({
         'Section': [
-            '🚀 Demo Product: GMV Max',
+            '🚀 Demo: GMV Max',
             '🔍 Competitor Analysis',
             '📊 GMP Metric System',
-            '💼 Candidate Work Demo'
+            '💼 Candidate Works'
         ],
         'Content': [
             'Product overview, core features, automation, attribution, analytics, AB testing',
@@ -199,7 +199,7 @@ if page == "📋 Overview":
     # st.dataframe(demo_capabilities, use_container_width=True, hide_index=True)
 
 # ============ Page 2: GMV Max Demo (Merged) ============
-elif page == "🚀 Demo Product: GMV Max":
+elif page == "🚀 Demo: GMV Max":
     # st.header("🚀 TikTok GMV Max - Product Overview")
     
     # Product Introduction
@@ -810,7 +810,7 @@ elif page == "📊 GMP Metric System":
     #     st.metric("Conversion Rate", "5.2%", "+1.1%")
 
 # ============ Page 5: Candidate Work Demo ============
-elif page == "💼 Candidate Work Demo":
+elif page == "💼 Candidate Works":
     # st.header("💼 Candidate Work Experience & Projects")
     
     st.markdown("""
