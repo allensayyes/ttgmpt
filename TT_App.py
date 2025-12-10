@@ -9,6 +9,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import base64
+import os
+import glob
+from PIL import Image
 
 st.set_page_config(
     page_title="TikTok GMV Max - Data Product Demo",
@@ -16,6 +19,44 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Function to load TikTok logo
+@st.cache_data
+def load_logo():
+    """Load TikTok logo from common filenames"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    possible_names = [
+        'tiktok_logo.png', 'TikTok_logo.png', 'TT_logo.png', 'tt_logo.png',
+        'tiktok.png', 'TikTok.png', 'logo.png', 'Logo.png',
+        'tiktok_logo.svg', 'TikTok_logo.svg', 'TT_logo.svg', 'tt_logo.svg',
+        'tiktok.svg', 'TikTok.svg', 'logo.svg', 'Logo.svg'
+    ]
+    
+    for name in possible_names:
+        logo_path = os.path.join(script_dir, name)
+        if os.path.exists(logo_path):
+            try:
+                return Image.open(logo_path)
+            except:
+                continue
+    
+    # Try to find any image file with 'logo' or 'tt' or 'tiktok' in name
+    try:
+        image_files = glob.glob(os.path.join(script_dir, "*.png")) + \
+                     glob.glob(os.path.join(script_dir, "*.jpg")) + \
+                     glob.glob(os.path.join(script_dir, "*.jpeg")) + \
+                     glob.glob(os.path.join(script_dir, "*.svg"))
+        for img_file in image_files:
+            filename_lower = os.path.basename(img_file).lower()
+            if any(keyword in filename_lower for keyword in ['logo', 'tt', 'tiktok']):
+                try:
+                    return Image.open(img_file)
+                except:
+                    continue
+    except:
+        pass
+    
+    return None
 
 # Global CSS Styling
 st.markdown("""
@@ -84,8 +125,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Page Title
-st.title("🎯 Interview Demo : TikTok Monetization Product Analytics")
+# Load and display logo
+logo = load_logo()
+
+# Page Title with Logo
+if logo:
+    col_logo, col_title = st.columns([1, 5])
+    with col_logo:
+        st.image(logo, width=100)
+    with col_title:
+        st.markdown("""
+        <h1 style="text-align: center; color: #000000; margin-bottom: 2rem; 
+                   font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+            Interview Demo : TikTok Monetization Product Analytics
+        </h1>
+        """, unsafe_allow_html=True)
+else:
+    st.title("Interview Demo : TikTok Monetization Product Analytics")
 
 # Sidebar Navigation
 page = st.sidebar.radio(
